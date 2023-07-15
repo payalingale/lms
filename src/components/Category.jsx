@@ -9,12 +9,10 @@ import {
   CardContent,
   CardMedia,
   IconButton,
+  Rating,
   Typography,
 } from "@mui/material";
-import {
-  FavoriteBorderTwoTone,
-  ShoppingCartTwoTone,
-} from "@mui/icons-material";
+import { Favorite, FavoriteBorder, ShoppingCart } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { ActionTypes } from "../redux/Constants";
 
@@ -22,9 +20,8 @@ const Category = () => {
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.carts);
   const wishList = useSelector((state) => state.wishList);
+  const subCategories = useSelector((state) => state.subCategories);
   const { category } = useParams();
-
-  const [subCategory, setSubCategory] = useState([]);
 
   const fetchData = () => {
     axios
@@ -34,20 +31,24 @@ const Category = () => {
           : Endpoints.SUB_CATEGORY_URL + "/" + category
       )
       .then((response) => {
-        setSubCategory(response.data);
+        dispatch({
+          type: ActionTypes.SET_SUB_CATEGORIES,
+          payload: {
+            data: response.data,
+          },
+        });
       })
       .catch((error) => {
         console.log(error);
       });
   };
-
-  console.log(subCategory);
+  console.log(subCategories);
 
   useEffect(() => {
     fetchData();
   }, [category]);
 
-  return subCategory.length ? (
+  return subCategories?.length ? (
     <Box
       sx={{
         display: "flex",
@@ -59,7 +60,7 @@ const Category = () => {
         alignItems: "flex-start",
       }}
     >
-      {subCategory.map((data) => {
+      {subCategories?.map((data) => {
         return (
           <Card
             sx={{
@@ -71,7 +72,7 @@ const Category = () => {
             variant="outlined"
           >
             <Box sx={{ display: "flex", alignItems: "center", margin: "4px" }}>
-              <Box sx={{ width: "250px", height: "150px" }}>
+              <Box sx={{ width: "250px", height: "175px" }}>
                 <CardMedia
                   component="img"
                   alt="green iguana"
@@ -87,16 +88,22 @@ const Category = () => {
                 }}
               >
                 <IconButton
-                  disabled={wishList.includes(data.id)}
                   color="secondary"
                   onClick={() => {
                     dispatch({
                       type: ActionTypes.UPDATE_WISHLIST_CART,
-                      payload: { data: data.id, isDelete: false },
+                      payload: {
+                        data: data.id,
+                        isDelete: wishList.includes(data.id),
+                      },
                     });
                   }}
                 >
-                  <FavoriteBorderTwoTone />
+                  {wishList.includes(data.id) ? (
+                    <Favorite />
+                  ) : (
+                    <FavoriteBorder />
+                  )}
                 </IconButton>
               </Box>
             </Box>
@@ -117,13 +124,18 @@ const Category = () => {
                   >
                     {data.title}
                   </Typography>
+                  <Rating
+                    name="simple-controlled"
+                    value={data.rating.rate}
+                    readOnly
+                  />
                   <Typography
                     gutterBottom
                     variant="filled"
                     component="div"
                     sx={{ textOverflow: "ellipsis", overflow: "hidden" }}
                   >
-                    <span>&#8377;</span>
+                    <span>&#36;</span>
                     {data.price}
                   </Typography>
                 </Box>
@@ -138,7 +150,7 @@ const Category = () => {
                       });
                     }}
                   >
-                    <ShoppingCartTwoTone />
+                    <ShoppingCart />
                     Add to Cart
                   </Button>
                 </Box>
